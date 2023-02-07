@@ -23,6 +23,6 @@ My challenge is to build a weather dashboard that will run in the browser and fe
     * The humidity
   * When a user click on a city in the search history they are again presented with current and future conditions for that city
 
-Deployed application: 
+Deployed application: https://ricj14.github.io/Weather_Dashboard_Challenge/
   ## Mockup
   ![demo](assets/10-server-side-apis-challenge-demo.png)
