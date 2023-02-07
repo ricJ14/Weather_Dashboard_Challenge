@@ -1,11 +1,12 @@
 const weatherAPIURL = "https://api.openweathermap.org";
 const weatherAPIKey = "61c5953a2a598f26f6304c521b1884a1";
-let searchHistory = []
+let searchHistory = [];
 
 let searchInput = $("#search-input");
 let searchForm = $("#search-form");
-let searchHistoryContainer = $("#history")
-let todayContainer = $("#today ")
+let searchHistoryContainer = $("#history");
+let forecastContainer = $("#forecast");
+let todayContainer = $("#today");
 
 
 function renderSearchHistory(){
@@ -37,41 +38,96 @@ function renderCurrentWeather(city, weatherData){
     let windKph =weatherData["wind"]["speed"];
     let humidity = weatherData["main"]["humidity"];
 
-    let iconUrl = `http://openweathermap.org/img/w${weatherData.weather[0].icon}.png`; 
+    let iconUrl = `http://openweathermap.org/img/w/${weatherData.weather[0].icon}.png`; 
     let iconDecription = weatherData.weather[0].description || weatherData[0].main 
 
-    let card = $("<div>")
-    let cardBody = $("<div>")
-    let weatherIcon = $("<img>")
-    let heading =  $("<h2>")
-    let tempEl = $("<p>") 
-    let windEl = $("<p>")
+    let card = $("<div>");
+    let cardBody = $("<div>");
+    let weatherIcon = $("<img>");
+    let heading =  $("<h2>");
+    let tempEl = $("<p>"); 
+    let windEl = $("<p>");
 
     let humidityEl = $("<p>") 
 
     card.attr("class", "card");
 
-    cardBody.attr("class", "card-body")
+    cardBody.attr("class", "card-body");
 
     card.append(cardBody);
 
-    heading.attr("class", "h3 card-title")
-    tempEl.attr("class", "card-text")
-    windEl.attr("class", "card-text")
+    heading.attr("class", "h3 card-title");
+    tempEl.attr("class", "card-text");
+    windEl.attr("class", "card-text");
     humidityEl.attr("class", "card-text");
 
-    heading.text(`${city} (${date})`)
+    heading.text(`${city} (${date})`);
     weatherIcon.attr("src", iconUrl);
     weatherIcon.attr("alt", iconDecription);
 
     heading.append(weatherIcon);
-    tempEl.text(`Temp ${tempC} C`)
+    tempEl.text(`Temp ${tempC} C`);
     windEl.text(`Wind ${windKph} KPH`);
-    humidityEl.text(`Humidity ${humidity} %`)
+    humidityEl.text(`Humidity ${humidity} %`);
     cardBody.append(heading, tempEl, windEl, humidityEl);
      
     todayContainer.html("");
      todayContainer.append(card);
+}
+
+function renderForecast(weatherData){
+    let headingCol = $("<div>");
+    let heading = $("<h4>");
+
+    headingCol.attr("class", "col-12");
+    heading.text("5-day forecast");
+    headingCol.append(heading);
+
+    forecastContainer.html("")
+
+    forecastContainer.append(headingCol);
+
+    let futureForecaste = weatherData.filter(function(forecast){
+        return forecast.dt_txt.includes("12")
+    })
+
+    for(i = 0; i < futureForecaste.length; i++){
+        let iconURL = `https://openweathermap.org/img/w/${futureForecaste[i].weather[0].icon}.png`
+        let iconDescription = futureForecaste[i].weather[0].description;
+        let tempC = futureForecaste[i].main.temp;
+        let humidity = futureForecaste[i].main.humidity;
+        let windKph = futureForecaste[i].wind.speed;
+
+        let col = $("<div>");
+        let card = $("<div>");
+        let cardBody = $("<div>");
+        let cardTitle = $("<h5>");
+        let weatherIcon = $("<img>");
+        let tempEl = $("<p>")
+        let windEl = $("<p>")
+        let humidityEl = $("<p>")
+
+        col.append(card);
+        card.append(cardBody);
+        cardBody.append(cardTitle, weatherIcon, tempEl, windEl, humidityEl);
+
+        col.attr("class", "col-md");
+        card.attr("class", "card bg-primary h-100 text-white");
+        cardTitle.attr("class", "card-title");
+        tempEl.attr("class", "card-text");
+        windEl.attr("class", "card-text");
+        humidityEl.attr("class", "card-text"); 
+
+        cardTitle.text(moment(futureForecaste[i].dt_text).format("D/M/YYYY"));
+        weatherIcon.attr("src", iconURL);
+        weatherIcon.attr("alt", iconDescription);
+        tempEl.text(`Temp ${tempC} C`);
+        windEl.text(`Wind: ${windKph} KPH`);
+        humidityEl.text(`Humidity ${humidity} %`);
+
+        forecastContainer.append(col)
+    }
+
 }
 
 
@@ -89,10 +145,10 @@ function renderCurrentWeather(city, weatherData){
             url: queryWeatherURL,
             method:"GET"
         }).then(function(response){
-            renderCurrentWeather(city, response.list[0])
-            // renderForcast(data.list)
+            renderCurrentWeather(city, response.list[0]);
+            renderForecast(response.list);
         })
-    }
+    }   
 
 
 function fetchCoord(search){
@@ -114,8 +170,8 @@ function InitializeHistory(){
     let storedHistory = localStorage.getItem("search-history");
 
     if(storedHistory) {
-         searchHistory = JSON.parse(storedHistory);
-         renderSearchHistory()
+    searchHistory = JSON.parse(storedHistory);
+    renderSearchHistory()
     }
 }
 
@@ -127,5 +183,20 @@ function submitSearchForm(event){
     searchInput.val("")
 }
 
+function clickSearchHistory(event){
+    if(!$(event.target).hasClass("btn-history")){
+        return
+    }
+    let search = $(event.target).attr("data-search")
+    fetchCoord(search);
+    searchInput.val()
+}   
+
 InitializeHistory()
 searchForm.on("submit", submitSearchForm);
+searchHistoryContainer.on("click", clickSearchHistory);
+
+
+
+
+
